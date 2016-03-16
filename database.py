@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import re, codecs, json, sys
@@ -23,7 +24,7 @@ class Event:
         """
         self.name = config['name']
         self.cat = config['category'].replace(u' ', u'_')
-        self.starttime = config['stattime']
+        self.starttime = config['starttime']
         self.endtime = max(config['endtime'].values())
         self.countries = dict(((name, {'endtime': endtime})
                                for name, endtime in config['endtime'].items()))
@@ -71,17 +72,17 @@ class Event:
         Uso das imagens nas wikis
         """
         c.execute(u'''SELECT
- SUBSTR(cl_to, 38) país,
+ SUBSTR(cl_to, 38) country,
  SUM(img_name IN (SELECT DISTINCT gil_to FROM globalimagelinks)) use_in_wiki
  FROM categorylinks INNER JOIN page ON cl_from = page_id INNER JOIN image ON page_title = img_name
  WHERE cl_type = 'file' AND cl_to IN (SELECT
    page_title
    FROM page
    WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%')
- GROUP BY país''', (self.cat + 'in_%',))
-        r = dict((i[0].decode('utf-8').replace(u'_', u' '), int(i[1])) for i in c.fetchall())
+ GROUP BY country''', (self.cat + 'in_%',))
+        r = dict((country.decode('utf-8').replace(u'_', u' '), int(usage)) for country, usage in c.fetchall())
         for country in self.countries:
-            self.countries[country]['usage'] = r[country]
+            self.countries[country]['usage'] = r[country] if country in r else 0
 
     def uploadUserCount(self):
         """
@@ -103,10 +104,10 @@ class Event:
    ) users
  INNER JOIN user ON img_user = user_id
  GROUP BY country;''', (self.cat + 'in_%',))
-        r = dict((country.decode('utf-8').replace(u'_', u' '), u'[{},{}]'.format(int(count), int(reg)))
+        r = dict((country.decode('utf-8').replace(u'_', u' '), u'[%d,%d]' % (int(count), int(reg)))
                  for country, count, reg in c.fetchall())
-        for country in countries:
-            self.countries[country]['users'] = r[country]
+        for country in self.countries:
+            self.countries[country]['users'] = r[country] if country in r else u'[0,0]'
 
     def usersList(self, country):
         """
@@ -142,7 +143,7 @@ class Event:
 
         main = u',\n  '.join(
             u'{{name:"{name}", usage:{usage}, users:{users}, endtime:"{endtime}", data:[{data}]}}' \
-                .format(name=p, **self.countries[country]) for country in self.countries)
+                .format(name=country, **self.countries[country]) for country in self.countries)
         return main
 
     def getAll(self):
@@ -155,20 +156,23 @@ class Event:
             r[country] = self.usersList(country)
         return r
 
-if __name__ == '__main__' and sys.argv[1] = 'update':
+if __name__ == '__main__' and 'update' in sys.argv:
     #TODO: Ler a página de configuração do commons
+    print os.getcwd()
     with codecs.open('config.json', 'r', 'utf-8') as f:
         config = json.load(f)
     try:
         with open('db.json', 'r') as f:
             db = json.load(f)
-    except as e:
+    except Exception as e:
         print u'Erro ao abrir db.json:', repr(e)
         db = {}
 
+    c = conn()
     for WL in config:
         event = Event(config[WL])
-        db[WL]['main'] = event.getMain()
+        db.setdefault(WL, {})['main'] = event.getMain()
+        print WL, 'updated'
 
     with open('db.json', 'w') as f:
         json.dump(db, f)
