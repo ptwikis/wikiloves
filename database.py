@@ -24,16 +24,16 @@ class Event:
         """
         self.name = config['name']
         self.cat = config['category'].replace(u' ', u'_')
-        self.starttime = config['starttime']
-        self.endtime = max(config['endtime'].values())
-        self.countries = dict(((name, {'endtime': endtime})
-                               for name, endtime in config['endtime'].items()))
+        self.countries = config['countries']
+        self.starttime = min(c['starttime'] for c in self.countries if 'starttime' in c)
+        self.endtime = max(c['endtime'] for c in self.countries if 'endtime' in c)
+        self.countries.upload({d['category']: {k: v for k, v in d.items() if k != 'category'}
+                               for c, d in self.countries.items() if 'category' in d})
 
     def uploadCount(self):
         """
         Contador de uploads
-        TODO: Desconsiderar uploads antes de starttime
-        """
+         """
         c.execute(u'''SELECT
  SUBSTR(cl_to, 38) país,
  UNIX_TIMESTAMP(SUBSTR(img_timestamp, 1, 8)) dia,
@@ -41,20 +41,21 @@ class Event:
  COUNT(*) upload
  FROM categorylinks
  INNER JOIN page ON cl_from = page_id
- INNER JOIN image ON page_title = img_name AND img_timestamp < ?
+ INNER JOIN image ON page_title = img_name AND img_timestamp BETWEEN ? AND ?
  WHERE cl_type = 'file' AND cl_to IN (SELECT
    page_title
    FROM page
    WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%'
  )
- GROUP BY país, hora''', (self.endtime, self.cat + 'in_%'))
+ GROUP BY país, hora''', (self.starttime * 10000, self.endtime * 10000, self.cat + '%'))
         
         # Lê o resultado da query
         r = [(country.decode('utf-8').replace(u'_', u' '), int(day) + 86400, int(hour), int(count))
              for country, day, hour, count in c.fetchall()]
-        # Considera apenas até endtime de cada país e desconsidera países que não estão na configuração
+        # Considera apenas o período do concurso de cada país
         r = [(country, day, count) for country, day, hour, count in r
-             if country in self.countries and hour <= self.countries[country]['endtime']]
+             if country not in self.countries
+             or self.countries[country]['starttime'] <= hour < self.countries[country]['endtime']]
         # Agrupa por país e dia, somando as contagens por hora de cada dia
         r = [(d[0], d[1], sum(h[2] for h in r if (h[0], h[1]) == d)) for d in set((i[0], i[1]) for i in r)]
 
@@ -79,7 +80,7 @@ class Event:
    page_title
    FROM page
    WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%')
- GROUP BY country''', (self.cat + 'in_%',))
+ GROUP BY country''', (self.cat + '%',))
         r = dict((country.decode('utf-8').replace(u'_', u' '), int(usage)) for country, usage in c.fetchall())
         for country in self.countries:
             self.countries[country]['usage'] = r[country] if country in r else 0
@@ -87,7 +88,6 @@ class Event:
     def uploadUserCount(self):
         """
         Número de usuários que fizeram upload
-        TODO: Incluir starttime na query
         """
         c.execute(u'''SELECT
  country,
@@ -101,9 +101,9 @@ class Event:
      page_title
      FROM page
      WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%')
-   ) users
+   ) users AND img_timestamp BETWEEN ? AND ?
  INNER JOIN user ON img_user = user_id
- GROUP BY country;''', (self.cat + 'in_%',))
+ GROUP BY country;''', (self.cat + '%', self.starttime * 10000, self.endtime * 10000))
         r = dict((country.decode('utf-8').replace(u'_', u' '), u'[%d,%d]' % (int(count), int(reg)))
                  for country, count, reg in c.fetchall())
         for country in self.countries:
@@ -127,7 +127,7 @@ class Event:
    GROUP BY img_user
    ORDER BY c DESC
   ) img
- INNER JOIN user ON img_user = user_id''', ( self.cat + u'_in_' + country.replace(u' ', u'_'),))
+ INNER JOIN user ON img_user = user_id''', ( self.cat + country.replace(u' ', u'_'),))
         r = [(user.decode('utf-8').replace(u'_', u' '), int(count), int(usage),
               u'%s/%s/%s' % (str(reg)[6:8], str(reg)[4:6], str(reg)[0:4]) if reg else u'?')
              for user, count, usage, reg in c.fetchall()]
@@ -140,6 +140,12 @@ class Event:
         self.uploadCount()
         self.imgUsage()
         self.uploadUserCount()
+        # Corrige nome de categorias, ex: the_Netherlands -> Netherlands
+        for country in self.countries.keys():
+            if self.countries[country].get('category') in self.countries:
+                self.countries[country].update(self.countries.pop(self.countries[country]['category']))
+            elif u'/' in country:
+                del self.countries[country]
 
         main = u',\n  '.join(
             u'{{name:"{name}", usage:{usage}, users:{users}, endtime:"{endtime}", data:[{data}]}}' \
@@ -153,7 +159,7 @@ class Event:
         r = {}
         r['main'] = self.getMain()
         for country in self.countries:
-            r[country] = self.usersList(country)
+            r[country] = self.usersList(self.countries[country].get('category', country))
         return r
 
 if __name__ == '__main__' and 'update' in sys.argv:
