@@ -1,172 +1,162 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import re, codecs, json, sys
+import re, json, sys, time
 import oursql, os
-#from urllib import urlopen
+from collections import defaultdict
+from urllib import urlopen
 
-def conn():
+updateLog = []
+
+class DB:
     """
-    Conecta ao banco de dados do commons
+    Classe para fazer consultas ao banco de dados
     """
-    connection = oursql.connect(db='commonswiki_p', host='commonswiki.labsdb',
-                                read_default_file=os.path.expanduser('~/replica.my.cnf'),
-                                read_timeout=10, charset='utf8', use_unicode=True)
-    return connection.cursor()
+    def __init__(self):
+        self.connect()
+    def connect(self):
+        self.conn = oursql.connect(db='commonswiki_p', host='commonswiki.labsdb',
+            read_default_file=os.path.expanduser('~/replica.my.cnf'),
+            read_timeout=10, charset='utf8', use_unicode=True, autoping=True)
+        self.cursor = self.conn.cursor()
+    def query(self, *sql):
+        """
+        Tenta fazer a consulta, reconecta até 10 vezes até conseguir
+        """
+        loops = 0
+        while True:
+            try:
+                self.cursor.execute(*sql)
+            except (AttributeError, oursql.OperationalError):
+                if loops < 10:
+                    loops += 1
+                    print 'Erro no DB, esperando %ds antes de tentar de novo' % loops
+                    time.sleep(loops)
+                else:
+                    self.cursor.execute(*sql)
+                    break
+            else:
+                break
+    def get(self):
+        return self.cursor.fetchall()
 
-class Event:
+def reData(txt, year):
     """
-    Classe para consultar e processar dados sobre os eventos
+    Parser para linha da configuração
     """
-    def __init__(self, config):
-        """
-        Lê configuração do evento ao criar uma instância
-        """
-        self.name = config['name']
-        self.cat = config['category'].replace(u' ', u'_')
-        self.countries = config['countries']
-        self.starttime = min(c['starttime'] for c in self.countries if 'starttime' in c)
-        self.endtime = max(c['endtime'] for c in self.countries if 'endtime' in c)
-        self.countries.upload({d['category']: {k: v for k, v in d.items() if k != 'category'}
-                               for c, d in self.countries.items() if 'category' in d})
+    m = re.search(ur'''
+        \s*wl\["(?P<event>earth|monuments)"\]\[(?P<year>20\d\d)]\ ?=\ ?\{|
+        \s*\["(?P<country>[-a-z]+)"\]\ =\ \{\["start"\]\ =\ (?P<start>%s\d{10}),\ \["end"\]\ =\ (?P<end>%s\d{10})\}
+        ''' % (year, year), txt, re.X)
+    return m and m.groupdict()
 
-    def uploadCount(self):
-        """
-        Contador de uploads
-         """
-        c.execute(u'''SELECT
- SUBSTR(cl_to, 38) país,
- UNIX_TIMESTAMP(SUBSTR(img_timestamp, 1, 8)) dia,
- SUBSTR(img_timestamp, 1, 10) hora,
- COUNT(*) upload
- FROM categorylinks
- INNER JOIN page ON cl_from = page_id
- INNER JOIN image ON page_title = img_name AND img_timestamp BETWEEN ? AND ?
- WHERE cl_type = 'file' AND cl_to IN (SELECT
-   page_title
-   FROM page
-   WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%'
- )
- GROUP BY país, hora''', (self.starttime * 10000, self.endtime * 10000, self.cat + '%'))
-        
-        # Lê o resultado da query
-        r = [(country.decode('utf-8').replace(u'_', u' '), int(day) + 86400, int(hour), int(count))
-             for country, day, hour, count in c.fetchall()]
-        # Considera apenas o período do concurso de cada país
-        r = [(country, day, count) for country, day, hour, count in r
-             if country not in self.countries
-             or self.countries[country]['starttime'] <= hour < self.countries[country]['endtime']]
-        # Agrupa por país e dia, somando as contagens por hora de cada dia
-        r = [(d[0], d[1], sum(h[2] for h in r if (h[0], h[1]) == d)) for d in set((i[0], i[1]) for i in r)]
 
-        for country in self.countries:
-            data = []
-            y = 0
-            for rcountry, day, count in sorted(r):
-                if rcountry == country:
-                    y += count
-                    data.append((day, y))
-            self.countries[country]['data'] = u', '.join(u'{x:%d,y:%d}' % (x, y) for x, y in data)
+def getConfig(page):
+    """
+    Lê a configuração da página de configuração no Commons
+    """
+    api = urlopen('https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=revisions&titles=%s&rvprop=content' % page)
+    text = json.loads(api.read())['query']['pages'].values()[0]['revisions'][0]['*']
+    
+    data, event, prefixes = {}, None, {}
+    lines = iter(text.split(u'\n'))
+    for l in lines:
+        m = re.search(u'\s*\["(?P<prefix>[\w-]+)"\] = "(?P<name>[\w ]+)"|(?P<close>\})', l)
+        if prefixes and m and m.group('close'):
+            break
+        elif m and m.group('prefix'):
+            prefixes[m.group('prefix')] = m.group('name')
 
-    def imgUsage(self):
-        """
-        Uso das imagens nas wikis
-        """
-        c.execute(u'''SELECT
- SUBSTR(cl_to, 38) country,
- SUM(img_name IN (SELECT DISTINCT gil_to FROM globalimagelinks)) use_in_wiki
- FROM categorylinks INNER JOIN page ON cl_from = page_id INNER JOIN image ON page_title = img_name
- WHERE cl_type = 'file' AND cl_to IN (SELECT
-   page_title
-   FROM page
-   WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%')
- GROUP BY country''', (self.cat + '%',))
-        r = dict((country.decode('utf-8').replace(u'_', u' '), int(usage)) for country, usage in c.fetchall())
-        for country in self.countries:
-            self.countries[country]['usage'] = r[country] if country in r else 0
+    for l in lines:
+        g = reData(l, event[-4:] if event else ur'20\d\d')
+        if not g:
+            continue
+        if g['event']:
+            event = u'WL' + (u'E' if g['event'] == u'earth' else u'M') + u' ' + g['year']
+            data[event] = {}
+        elif g['country'] and event:
+            if g['country'] not in prefixes:
+                updateLog.append(u'Unknow prefix: ' + g['country'])
+                continue
+            data[event][prefixes[g['country']]] = {'start': int(g['start']), 'end': int(g['end'])}
 
-    def uploadUserCount(self):
-        """
-        Número de usuários que fizeram upload
-        """
-        c.execute(u'''SELECT
- country,
- COUNT(*),
- SUM(user_registration > 20140501000000)
- FROM (SELECT DISTINCT
-   SUBSTR(cl_to, 38) country,
-   img_user
-   FROM categorylinks INNER JOIN page ON cl_from = page_id INNER JOIN image ON page_title = img_name
-   WHERE cl_type = 'file' AND cl_to IN (SELECT
-     page_title
-     FROM page
-     WHERE page_namespace = 14 AND page_title LIKE ? AND page_title NOT LIKE '%\_-\_%')
-   ) users AND img_timestamp BETWEEN ? AND ?
- INNER JOIN user ON img_user = user_id
- GROUP BY country;''', (self.cat + '%', self.starttime * 10000, self.endtime * 10000))
-        r = dict((country.decode('utf-8').replace(u'_', u' '), u'[%d,%d]' % (int(count), int(reg)))
-                 for country, count, reg in c.fetchall())
-        for country in self.countries:
-            self.countries[country]['users'] = r[country] if country in r else u'[0,0]'
+    return {name: config for name, config in data.items() if config}
 
-    def usersList(self, country):
-        """
-        Usuários que fizeram upload por país
-        """
-        c.execute(u'''SELECT
+catExceptions = {
+    u'Netherlands': u'the_Netherlands',
+    u'Czech_Republic': u'the_Czech_Republic',
+    u'Philippines': u'the_Philippines',
+    u'United_States': u'the_United_States'
+}
+
+dbquery = u'''SELECT
+ img_timestamp,
+ img_name IN (SELECT DISTINCT gil_to FROM globalimagelinks),
  user_name,
- c,
- use_in_wiki,
  user_registration
  FROM (SELECT
-   img_user,
-   COUNT(*) c,
-   SUM(img_name IN (SELECT DISTINCT gil_to FROM globalimagelinks)) use_in_wiki
-   FROM categorylinks INNER JOIN page ON cl_from = page_id INNER JOIN image ON page_title = img_name
-   WHERE cl_to = ? AND cl_type = 'file'
-   GROUP BY img_user
-   ORDER BY c DESC
-  ) img
- INNER JOIN user ON img_user = user_id''', ( self.cat + country.replace(u' ', u'_'),))
-        r = [(user.decode('utf-8').replace(u'_', u' '), int(count), int(usage),
-              u'%s/%s/%s' % (str(reg)[6:8], str(reg)[4:6], str(reg)[0:4]) if reg else u'?')
-             for user, count, usage, reg in c.fetchall()]
-        return r
+   cl_to,
+   cl_from
+   FROM categorylinks
+   WHERE cl_to = ? AND cl_type = 'file') cats
+ INNER JOIN page ON cl_from = page_id
+ INNER JOIN image ON page_title = img_name
+ INNER JOIN user ON img_user = user_id'''
 
-    def getMain(self):
-        """
-        Faz as consultas para página principal do evento e retorna os dados
-        """
-        self.uploadCount()
-        self.imgUsage()
-        self.uploadUserCount()
-        # Corrige nome de categorias, ex: the_Netherlands -> Netherlands
-        for country in self.countries.keys():
-            if self.countries[country].get('category') in self.countries:
-                self.countries[country].update(self.countries.pop(self.countries[country]['category']))
-            elif u'/' in country:
-                del self.countries[country]
+def getData(name, data):
+    """
+    Coleta dados do banco de dados e processa
+    """
+    category = u'Images_from_Wiki_Loves_%s_%s_in_' % \
+        (u'Earth' if name[2] == 'E' else u'Monuments', name[-4:])
 
-        main = u',\n  '.join(
-            u'{{name:"{name}", usage:{usage}, users:{users}, endtime:"{endtime}", data:[{data}]}}' \
-                .format(name=country, **self.countries[country]) for country in self.countries)
-        return main
+    starttime = min(data[c]['start'] for c in data if 'start' in data[c])
+    endtime = max(data[c]['end'] for c in data if 'end' in data[c])
 
-    def getAll(self):
-        """
-        Faz todas as consultas do evento e retorna os dados
-        """
-        r = {}
-        r['main'] = self.getMain()
-        for country in self.countries:
-            r[country] = self.usersList(self.countries[country].get('category', country))
-        return r
+    for country in data.keys():
+        if country[0].islower():
+            updateLog.append(u'')
+        cat = category + catExceptions.get(country, country)
+        if name == 'WLM 2010':
+            cat = u'Images_from_Wiki_Loves_Monuments_2010'
+        commonsdb.query(dbquery, (cat,))
+
+        dbData = tuple(
+            (int(timestamp),
+             bool(usage),
+             user.decode('utf-8'),
+             int(user_reg or 0))
+            for timestamp, usage, user, user_reg in commonsdb.get())
+
+        cData = {'starttime': data[country].get('start', starttime),
+                 'endtime': data[country].get('end', endtime),
+                 'data': defaultdict(int), # data: {timestamp_day0: n, timestamp_day1: n,...}
+                 'users': {}} # users: {'user1': {'count': n, 'usage': n, 'reg': timestamp},...}
+
+        for timestamp, usage, user, user_reg in dbData:
+            # Desconsidera timestamps fora do período da campanha
+            if not cData['starttime'] <= timestamp <= cData['endtime']:
+                continue
+            # Conta imagens por dia
+            cData['data'][str(timestamp)[0:8]] += 1
+            if user not in cData['users']:
+                cData['users'][user] = {'count': 0, 'usage': 0, 'reg': user_reg}
+            cData['users'][user]['count'] += 1
+            if usage:
+                cData['users'][user]['usage'] += 1
+
+        data.setdefault(country, {}).update(
+            {'data': cData['data'], 'users': cData['users']})
+        data[country]['usercount'] = len(cData['users'])
+        data[country]['count'] = sum(u['count'] for u in cData['users'].itervalues())
+        data[country]['usage'] = sum(u['usage'] for u in cData['users'].itervalues())
+        data[country]['category'] = cat
+
+    return data
+
 
 if __name__ == '__main__' and 'update' in sys.argv:
-    #TODO: Ler a página de configuração do commons
-    print os.getcwd()
-    with codecs.open('config.json', 'r', 'utf-8') as f:
-        config = json.load(f)
+    config = getConfig(u'Module:WL_data')
     try:
         with open('db.json', 'r') as f:
             db = json.load(f)
@@ -174,11 +164,21 @@ if __name__ == '__main__' and 'update' in sys.argv:
         print u'Erro ao abrir db.json:', repr(e)
         db = {}
 
-    c = conn()
+    commonsdb = DB()
     for WL in config:
-        event = Event(config[WL])
-        db.setdefault(WL, {})['main'] = event.getMain()
-        print WL, 'updated'
-
-    with open('db.json', 'w') as f:
-        json.dump(db, f)
+        starttime = min(config[WL][c]['start'] for c in config[WL] if 'start' in config[WL][c])
+        endtime = max(config[WL][c]['end'] for c in config[WL] if 'end' in config[WL][c])
+        # Só atualiza concursos que não estejam no db.json ou que estejam em andamento
+        if WL not in db or starttime < time.strftime('%Y%m%d%H%M%S') < endtime:
+            start = time.time()
+            db[WL] = getData(WL, config[WL])
+            with open('db.json', 'w') as f:
+                json.dump(db, f)
+            log = 'Salved %s: %dsec, %d countries, %d uploads' % \
+                (WL, time.time() - start, len(db[WL]), sum(db[WL][c].get('count', 0) for c in db[WL]))
+            print log
+            updateLog.append(log)
+    commonsdb.conn.close()
+    if updateLog:
+        with open('update.log', 'a') as f:
+            f.write('\n'.join(updateLog)+'\n')
