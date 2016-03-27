@@ -72,7 +72,7 @@ def getConfig(page):
         if not g:
             continue
         if g['event']:
-            event = u'WL' + (u'E' if g['event'] == u'earth' else u'M') + u' ' + g['year']
+            event = g['event'] + g['year']
             data[event] = {}
         elif g['country'] and event:
             if g['country'] not in prefixes:
@@ -84,9 +84,10 @@ def getConfig(page):
 
 catExceptions = {
     u'Netherlands': u'the_Netherlands',
-    u'Czech_Republic': u'the_Czech_Republic',
+    u'Czech Republic': u'the_Czech_Republic',
     u'Philippines': u'the_Philippines',
-    u'United_States': u'the_United_States'
+    u'United Kingdom': u'the_United_Kingdom',
+    u'United States': u'the_United_States'
 }
 
 dbquery = u'''SELECT
@@ -108,7 +109,7 @@ def getData(name, data):
     Coleta dados do banco de dados e processa
     """
     category = u'Images_from_Wiki_Loves_%s_%s_in_' % \
-        (u'Earth' if name[2] == 'E' else u'Monuments', name[-4:])
+            (name[0:-4].capitalize(), name[-4:])
 
     starttime = min(data[c]['start'] for c in data if 'start' in data[c])
     endtime = max(data[c]['end'] for c in data if 'end' in data[c])
@@ -116,8 +117,8 @@ def getData(name, data):
     for country in data.keys():
         if country[0].islower():
             updateLog.append(u'')
-        cat = category + catExceptions.get(country, country)
-        if name == 'WLM 2010':
+        cat = category + catExceptions.get(country, country.replace(' ', u'_'))
+        if name == 'monuments2010':
             cat = u'Images_from_Wiki_Loves_Monuments_2010'
         commonsdb.query(dbquery, (cat,))
 
@@ -127,6 +128,12 @@ def getData(name, data):
              user.decode('utf-8'),
              int(user_reg or 0))
             for timestamp, usage, user, user_reg in commonsdb.get())
+
+        if not dbData:
+            updateLog.append(u'%s in %s is configurated, but no file was found in [[Category:%s]]' %
+                             (name, country, cat.replace(u'_', u' ')))
+            del data[country]
+            continue
 
         cData = {'starttime': data[country].get('start', starttime),
                  'endtime': data[country].get('end', endtime),
@@ -174,11 +181,11 @@ if __name__ == '__main__' and 'update' in sys.argv:
             db[WL] = getData(WL, config[WL])
             with open('db.json', 'w') as f:
                 json.dump(db, f)
-            log = 'Salved %s: %dsec, %d countries, %d uploads' % \
+            log = 'Saved %s: %dsec, %d countries, %d uploads' % \
                 (WL, time.time() - start, len(db[WL]), sum(db[WL][c].get('count', 0) for c in db[WL]))
             print log
             updateLog.append(log)
     commonsdb.conn.close()
     if updateLog:
-        with open('update.log', 'a') as f:
-            f.write('\n'.join(updateLog)+'\n')
+        with open('update.log', 'w') as f:
+            f.write(time.strftime('%Y%m%d%H%M%S') + '\n' + '\n'.join(updateLog))
