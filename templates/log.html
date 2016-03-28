@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{% if log %}
+<p>Database updated at {{ time }}.</p>
+<ul>
+{% for line in log %}
+<li>{{ line|safe }}
+{% endfor %}
+</ul>
+{% else %}
+<p>Error: no log file found</p>
+{% endif %}
+{% endblock %} 

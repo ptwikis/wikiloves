@@ -15,8 +15,12 @@
 {####  MENU  ####}
 <img src="//upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Tool_labs_logo.svg/120px-Tool_labs_logo.svg.png">
                 <div id="menu-content">
-{% for item, path in menu %}
-<div id="menu-item"><a href="{{ url_for('.index') }}{{ path }}">{{ item }}</a></div>
+<div id="menu-item"><a href="{{ url_for('.index') }}">Main page</a></div>
+{% for name, years in menu.items() %}
+<div id="menu-item"><a href="{{ url_for('.index') }}{{ name }}">WL {{ name|capitalize }}</a></div>
+{% for year in years %}
+<div id="menu-item"><a href="{{ url_for('.index') }}{{name}}/{{ year }}"> &nbsp; {{ year }}</a></div>
+{% endfor %}
 {% endfor %}
 </div>
 {# END MENU #}
@@ -25,9 +29,15 @@
             <div id="content">
 <br/>
 <h1>{{ title }}</h1>
-<hr/> Tool Labs – Ferramentas para projetos lusófonos <br/><br/>
+<hr/> Tool Labs – Tools for Wiki Loves Photo Competitions <br/><br/>
 
+<div style="font-size:1.8em; font-weight:bold; color:gray; text-align:center">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Under_construction_icon-blue.svg/60px-Under_construction_icon-blue.svg.png"/>
+Tools for Wiki Loves Competitions are under costruction
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Under_construction_icon-blue.svg/60px-Under_construction_icon-blue.svg.png"/>
+</div>
 {% block content %}{% endblock %}
+{% if warn %}<p style="color:#500">{{ warn }}</p>{% endif %}
 
             </div>
        </div>
