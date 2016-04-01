@@ -157,6 +157,8 @@ def getData(name, data):
         data[country]['usercount'] = len(cData['users'])
         data[country]['count'] = sum(u['count'] for u in cData['users'].itervalues())
         data[country]['usage'] = sum(u['usage'] for u in cData['users'].itervalues())
+        data[country]['userreg'] = sum(1 for u in cData['users'].itervalues() if u['reg'] > cData['starttime']) \
+            if 'starttime' in cData else 0
         data[country]['category'] = cat
 
     return data
