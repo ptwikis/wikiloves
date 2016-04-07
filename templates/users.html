@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<table><tr><th>key</th><th>value</th></tr>
-{% for key, value in data.iteritems() %}
-<tr><td>{{ key }}</td><td>{{ value }}</td></tr>
-{% endfor %}
+<table style="text-align:center; border-collapse:collapse; min-width:800px; margin-top:8px">
+     <tr>
+         <th>Uploader</th>
+         <th>Images</th>
+         <th>Images used<br/>in the wikis</th>
+         <th>Registration</th>
+         {% for user, d in data %}<tr>
+             <td><a href="https://commons.wikimedia.org/w/index.php?title=Special:ListFiles&limit=250&user={{ user|replace(' ', '_') }}">{{ user }}</a></td>
+             <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
+             <td>{{ d['usage'] }}</td>
+             <td style="background-color:#F8F8F8{% if d['reg'] > starttime %}; color:#080{% endif -%}
+                 ">{{ d['reg']|date if d['reg'] else '?' }}</td>
+         </tr>{% endfor %}
 </table>
 {% endblock %} 

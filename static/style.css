@@ -134,4 +134,9 @@ select
 table.lista > caption {
     font-weight: bold;
 }
-
+table th {
+    border-bottom:2px solid #555; padding:2px 5px 2px 5px
+}
+table td {
+    padding:5px 2px 5px 2px; border-bottom:1px solid #DDD
+}

@@ -7,22 +7,29 @@
 
         <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='Tool_labs_logo.ico') }}" />
         <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='style.css') }}" />
+{%- if rickshaw %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='rickshaw/rickshaw.min.css') }}">
+        <script src="{{ url_for('static', filename='rickshaw/vendor/d3.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='rickshaw/vendor/d3.layout.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='rickshaw/rickshaw.js') }}"></script>
+{%- endif  %}{% if data %}
+        <script src="{{ url_for('static', filename='graphs.js') }}"></script>
+{%- endif %}
 {% block head %}{% endblock %}
     </head>
     <body>
         <div id="content-wrapper">
             <div id="menu">
-{####  MENU  ####}
+{#-###  MENU  ####}
 <img src="//upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Tool_labs_logo.svg/120px-Tool_labs_logo.svg.png">
                 <div id="menu-content">
 <div id="menu-item"><a href="{{ url_for('.index') }}">Main page</a></div>
-{% for name, years in menu.items() %}
+{%- for name, years in menu.items() %}
 <div id="menu-item"><a href="{{ url_for('.index') }}{{ name }}">WL {{ name|capitalize }}</a></div>
-{% for year in years %}
+{%- for year in years %}
 <div id="menu-item"><a href="{{ url_for('.index') }}{{name}}/{{ year }}"> &nbsp; {{ year }}</a></div>
-{% endfor %}
-{% endfor %}
-</div>
+{%- endfor %}
+{%- endfor -%}
 {# END MENU #}
                 </div>
             </div>
@@ -42,7 +49,7 @@ Tools for Wiki Loves Competitions are under costruction
             </div>
        </div>
        <div style="float: right; margin: 10px 8px; font-size:x-small">
-Feito com <a href="http://flask.pocoo.org/">Flask</a>
+Made with <a href="http://flask.pocoo.org/">Flask</a>
        </div>
        <div style="text-align:center; font-size:x-small; margin: 10px 10px 12px 181px">
 The <a href="https://github.com/ptwikis/wikiloves">source</a> of this tool is available under GNU General Public License 3.0 (GPL V3).

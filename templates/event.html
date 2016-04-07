@@ -1,8 +1,31 @@
 {% extends "base.html" %}
+{% block head %}
+        <script>
+var data = [{id: "graph", type: "line", series: [
+{%- for key, value in data|dictsort %}
+    {name: "{{ key }}", {#
+   #}count: {{ value['count'] }}, {#
+   #}usercount: {{ value['usercount'] }}, {#
+   #}usage: {{ value['usage'] }}, {#
+   #}userreg: {{ value['userreg'] }}, {#
+   #}data:{
+    {%- for day, uploads in value['data']|dictsort -%}
+        {{ day }}: {{ uploads }}{% if not loop.last %}, {% endif %}
+{%- endfor -%} }}{% if not loop.last %}, {% endif %}
+{%- endfor %}
+]}]
+	</script>
+{% endblock %}
 {% block content %}
-<table><tr><th>key</th><th>value</th></tr>
-{% for key, value in data.iteritems() %}
-<tr><td><b><a href="./{{ year }}/{{ key }}">{{ key }}</a></b></td><td>{{ value }}</td></tr>
-{% endfor %}
+<div id="graph"></div>
+<table id="countries" style="text-align:center; border-collapse:collapse; min-width:800px; margin-top:8px">
+    <tr>
+        <th></th>
+        <th>Country</th>
+        <th>Images*</th>
+        <th>Images used<br/>in the wikis</th>
+        <th>Uploaders</th>
+        <th>Uploaders registered<br/>after competition start</th>
+    </tr>
 </table>
 {% endblock %} 

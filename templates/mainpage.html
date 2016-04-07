@@ -1,10 +1,65 @@
 {% extends "base.html" %}
+{% block head %}
+        <script>
+var data = [
+{%- for name, series in data|dictsort %}
+{id: "graph-{{ name }}", type: "bar", name: "{{ name }}", series: [
+    {% for year, d in series|dictsort -%}
+    {year: {{ year }}, {#
+   #}count: {{ d['count'] }}, {#
+   #}usage: {{ d['usage'] }}, {#
+   #}usercount: {{ d['usercount'] }}, {#
+   #}userreg: {{ d['userreg'] }}}{% if not loop.last %}, {% endif %}
+    {% endfor -%}
+]}{% if not loop.last %}, {% endif %}
+{%- endfor %}
+]
+	</script>
+{% endblock %}
 {% block content %}
 {% if data %}
-<table><tr><th>key</th><th>value</th></tr>
-{% for key, value in data.iteritems() %}
-<tr><td>{{ key }}</td><td>{{ value }}</td></tr>
-{% endfor %}
+<h2>Wiki Loves Earth</h2><hr/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/WLE_Austria_Logo.svg/100px-WLE_Austria_Logo.svg.png" style="float:right"/>
+<p>WLE description...</p>
+<div id="graph-earth"></div><br/>
+<table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
+    <tr>
+        <th>Year</th>
+        <th style="background-color:#339966; color:white">Uploads</th>
+        <th style="background-color:#45E695">Images used<br/>in the wikis</th>
+        <th style="background-color:#2266AA; color:white">Uploaders</th>
+        <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
+    </tr>
+    {% for year, d in data['earth']|dictsort -%}
+    <tr>
+        <td>{{ year }}</td>
+        <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
+        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
+        <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
+    </tr>{% endfor %}
+</table>
+<br/><br/>
+<h2>Wiki Loves Monuments</h2><hr/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png" style="float:right"/>
+<p>WLM description...</p>
+<div id="graph-monuments"></div><br/>
+<table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
+    <tr>
+        <th>Year</th>
+        <th style="background-color:#8F0000; color:white">Uploads</th>
+        <th style="background-color:#E62E2E; color:white">Images used<br/>in the wikis</th>
+        <th style="background-color:#2266AA; color:white">Uploaders</th>
+        <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
+    </tr>
+    {% for year, d in data['monuments']|dictsort -%}
+    <tr>
+        <td>{{ year }}</td>
+        <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
+        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
+        <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
+    </tr>{% endfor %}
 </table>
 {% else %}
 <p>Error: no database found</p>
