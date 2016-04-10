@@ -32,7 +32,7 @@ var data = [
     </tr>
     {% for year, d in data['earth']|dictsort -%}
     <tr>
-        <td><a href="/earth/{{ year }}">{{ year }}</a></td>
+        <td><a href="{{ url_for('index') }}earth/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
@@ -54,7 +54,7 @@ var data = [
     </tr>
     {% for year, d in data['monuments']|dictsort -%}
     <tr>
-        <td><a href="/monuments/{{ year }}">{{ year }}</a></td>
+        <td><a href="{{ url_for('index') }}monuments/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
@@ -70,7 +70,7 @@ var data = [
         <th style="background-color:#8F0000; color:white">Wiki Loves Monuments</th>
     </tr>
     {%- for c, events in countries|dictsort %}
-    <tr><td><a href="/country/{{ c }}">{{ c }}</a></td><td>{{ events[0]|sort|join(', ') if events[0] else ''}}</td>{#
+    <tr><td><a href="{{ url_for('country', name=c) }}">{{ c }}</a></td><td>{{ events[0]|sort|join(', ') if events[0] else ''}}</td>{#
         #}<td>{{ events[1]|sort|join(', ') if events[1] else ''}}</td></tr>
     {%- endfor %}
 </table>

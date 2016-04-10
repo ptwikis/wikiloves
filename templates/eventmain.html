@@ -43,7 +43,7 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
     </tr>
     {% for year, d in data[name]|dictsort -%}
     <tr>
-        <td><a href="/{{ name }}/{{ year }}">{{ year }}</a></td>
+        <td><a href="{{ url_for('index') }}{{ name }}/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
@@ -52,7 +52,7 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
 </table><br/>
 <p>Below are the graps per country.</p><br/>
 {% for country, cdata in data['countries']|dictsort %}
-<h2><a href="/country/{{ country }}">{{ country }}</a></h2><hr/>
+<h2><a href="{{ url_for('country', name=country) }}">{{ country }}</a></h2><hr/>
 <div id="graph{{ loop.index }}">
 </div>
 <table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
