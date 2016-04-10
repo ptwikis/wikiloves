@@ -69,7 +69,8 @@ function countryLine(d, i){
     line = [];
     line.push('<td><span style="display:inline-block; width:40px; height:2px; border-top:4px solid ' +
         data[d].series[i].color + '"></span></td>');
-    line.push('<td style="background-color:#F8F8F8">' + data[d].series[i].name + '</td>');
+    line.push('<td style="background-color:#F8F8F8"><a href="/country/' + data[d].series[i].name + '">' +
+            data[d].series[i].name + '</a></td>');
     line.push('<td>' + String(data[d].series[i].count) + '</td>');
     line.push('<td style="background-color:#F8F8F8">' + String(data[d].series[i].usage) + ' (' +
         String(Math.round(100 * data[d].series[i].usage / data[d].series[i].count)) + '%)</td>');

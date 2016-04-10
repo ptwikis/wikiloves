@@ -2,17 +2,8 @@
 {% block head %}
         <script>
 var data = [
+{%- for name, series in data|dictsort %}
 {id: "graph-{{ name }}", type: "bar", name: "{{ name }}", series: [
-    {% for year, d in data[name]|dictsort -%}
-    {year: {{ year }}, {#
-   #}count: {{ d['count'] }}, {#
-   #}usage: {{ d['usage'] }}, {#
-   #}usercount: {{ d['usercount'] }}, {#
-   #}userreg: {{ d['userreg'] }}}{% if not loop.last %}, {% endif %}
-    {% endfor -%}
-]},
-{%- for country, series in data['countries']|dictsort %}
-{id: "graph{{ loop.index }}", type: "bar", name: "{{ name }}", series: [
     {% for year, d in series|dictsort -%}
     {year: {{ year }}, {#
    #}count: {{ d['count'] }}, {#
@@ -26,34 +17,12 @@ var data = [
 	</script>
 {% endblock %}
 {% block content %}
-<p>Some text here...</p>
+{% for name, series in data|dictsort %}
+<h2>Wiki Loves {{ name|capitalize }}</h2><hr/>
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/{% if name == 'earth' -%}
 f/f4/WLE_Austria_Logo.svg/100px-WLE_Austria_Logo.svg.png{% else -%}
 f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style="float:right"/>
-<div id="graph-{{ name }}"></div>
-<table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
-    <tr>
-        <th>Year</th>
-        <th style="background-color:#{% if name == 'earth' %}339966{% else -%}
-            8F0000{% endif %}; color:white">Uploads</th>
-        <th style="background-color:#{% if name == 'earth' %}45E695{% else -%}
-            E62E2E; color:white{% endif %}">Images used<br/>in the wikis</th>
-        <th style="background-color:#2266AA; color:white">Uploaders</th>
-        <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
-    </tr>
-    {% for year, d in data[name]|dictsort -%}
-    <tr>
-        <td><a href="/{{ name }}/{{ year }}">{{ year }}</a></td>
-        <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
-        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
-        <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
-    </tr>{% endfor %}
-</table><br/>
-<p>Below are the graps per country.</p><br/>
-{% for country, cdata in data['countries']|dictsort %}
-<h2><a href="/country/{{ country }}">{{ country }}</a></h2><hr/>
-<div id="graph{{ loop.index }}">
+<div id="graph-{{ name }}">
 </div>
 <table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
     <tr>
@@ -65,9 +34,9 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
         <th style="background-color:#2266AA; color:white">Uploaders</th>
         <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
     </tr>
-    {% for year, d in cdata|dictsort -%}
+    {% for year, d in series|dictsort -%}
     <tr>
-        <td>{{ year }}</td>
+        <td><a href="/{{ name }}/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
         <td style="background-color:#F8F8F8"><a href="/{{ name }}/{{ year }}/{{ country }}">{{ d['usercount'] }}</td>

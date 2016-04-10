@@ -19,10 +19,20 @@ mainData = {name: {e[-4:]:
      'userreg': sum(db[e][c]['userreg'] for c in db[e]),
      'usage': sum(db[e][c]['usage'] for c in db[e])}
     for e in db if e[:-4] == name} for name in set(e[:-4] for e in db)}
+cData = {}
+for e in db:
+    for c in db[e]:
+        cData.setdefault(c, {}).setdefault(e[:-4], {}).update({e[-4:]: {
+            'count': db[e][c]['count'], 'usercount': db[e][c]['usercount'],
+            'usage': db[e][c]['usage'], 'userreg': db[e][c]['userreg']}})
 
 @app.route('/')
 def index():
-    return render_template('mainpage.html', title=u'Wiki Loves Competitions Tools', menu=menu, data=mainData)
+    countries = {c: [(cData[c]['earth'].keys() if 'earth' in cData[c] else None),
+                     (cData[c]['monuments'].keys() if 'monuments' in cData[c] else None)]
+            for c in cData}
+    return render_template('mainpage.html', title=u'Wiki Loves Competitions Tools', menu=menu,
+            data=mainData, countries=countries)
 
 @app.route('/log')
 def logpage():
@@ -44,11 +54,8 @@ def event_main(name):
     if name in mainData:
         eventName = u'Wiki Loves %s' % name.capitalize()
         eventData = {name: {y: v for y, v in mainData[name].iteritems()}}
-        eventData.update(countries = {c: {e[-4:]:
-            {'count': db[e][c]['count'], 'usercount': db[e][c]['usercount'],
-                'usage': db[e][c]['usage'], 'userreg': db[e][c]['userreg']}
-            for e in db if e[:-4] == name and c in db[e]}
-            for c in set(c for e in db if e[:-4] == name for c in db[e])})
+        eventData.update(countries = {c: cData[c][e] for c in cData
+            for e in cData[c] if e == name})
         return render_template('eventmain.html', title=eventName, menu=menu, name=name, data=eventData)
     else:
         return render_template('page_not_found.html', title=u'Event not found', menu=menu)
@@ -84,6 +91,14 @@ def users(name, year, country):
         return render_template('page_not_found.html', title=u'Country not found', menu=menu)
     else:
         return render_template('page_not_found.html', title=u'Event not found', menu=menu)
+
+@app.route('/country/<name>')
+def country(name):
+    if name in cData:
+        return render_template('country.html', title=u'Wiki Loves Competitions in ' + name, menu=menu,
+                data=cData[name], country=name)
+    else:
+        return render_template('page_not_found.html', title=u'Country not found', menu=menu)
 
 @app.template_filter(name='date')
 def date_filter(s):
