@@ -32,6 +32,14 @@ body
     border-bottom: 1px solid #A7D7F9;
 } 
 
+#image-content
+{
+    padding: 24px 24px 24px 24px;
+    background: white;
+    height: 100%;
+    border-bottom: 1px solid #A7D7F9;
+} 
+
 h1
 {
     margin-bottom: 0.1em;

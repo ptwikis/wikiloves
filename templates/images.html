@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+        <title>{{ title }}</title>
+
+        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='Tool_labs_logo.ico') }}" />
+        <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='style.css') }}" />
+    </head>
+    <body>
+        <div id="content-wrapper">
+            <div id="image-content">
+<br/>
+<h1>{{ title }}</h1>
+<hr/> Tool Labs – Tools for Wiki Loves Photo Competitions <br/>
+{%- if backto|length == 3 %}
+<p><a href="{{ url_for('index') }}{{ backto|join('/') }}">Back to Wiki Loves {{ backto[0]|capitalize }} {{ backto[1] }} {{ backto[2] }}</a></p>
+{%- else %}
+<p><a href="{{ url_for('index') }}{{ backto|join('/') }}">Back to Wiki Loves {{ backto[0]|capitalize }} {{ backto[1] }}</a></p>
+{% endif %}
+<br/>
+<div style="font-size:1.8em; font-weight:bold; color:gray; text-align:center">
+</div>
+<table style="text-align: center; width: 100%">
+<tr>
+{% for img in images -%}
+<td><img src="//upload.wikimedia.org/wikipedia/commons/thumb/{{ img[1][0] }}/{{ img[1] }}/{{ img[0] }}/{{ img[2] >= img[3] and 250 or (img[2] / img[3] * 250)|int }}px-{{ img[0] }}"/>
+    <br/><a href="https://commons.wikimedia.org/wiki/File:{{ img[0] }}">{{ img[0]|replace('_', ' ') }}</a></td>
+{%- if loop.index % 4 == 0 %}
+</tr>
+<tr>
+{% endif -%}
+{% endfor -%}
+</tr>
+</table>
+{% if warn %}<p style="color:#500">{{ warn }}</p>{% endif %}
+
+            </div>
+       </div>
+       <div style="float: right; margin: 10px 8px; font-size:x-small">
+Made with <a href="http://flask.pocoo.org/">Flask</a>
+       </div>
+       <div style="text-align:center; font-size:x-small; margin: 10px 10px 12px 181px">
+The <a href="https://github.com/ptwikis/wikiloves">source</a> of this tool is available under GNU General Public License 3.0 (GPL V3).
+       </div>
+    </body>
+</html>
+
+ 

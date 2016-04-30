@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import json, os, time, re
+import images
 
 app = Flask(__name__)
 app.debug = True
@@ -99,6 +100,16 @@ def country(name):
                 data=cData[name], country=name)
     else:
         return render_template('page_not_found.html', title=u'Country not found', menu=menu)
+
+@app.route('/images')
+def images_page():
+    args = request.args
+    imgs = images.get(args)
+    if not imgs:
+        return render_template('images_not_found.html', menu=menu, title=u'Images not found')
+    backto = [args['event'], args['year']] + ([args['country']] if 'user' in args else [])
+    title = u'Images of {user}Wiki Loves {0} {1} {2}'.format(*name, user=name[3] + u' in ' if len(name) == 4 else u'')
+    return render_template('images.html', menu=menu, title='Images of Wiki Loves', warn=args, images=imgs, backto=backto)
 
 @app.template_filter(name='date')
 def date_filter(s):

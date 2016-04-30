@@ -66,19 +66,23 @@ function renderBar(name, id, series){
 }
 
 function countryLine(d, i){
+    var evt = location.pathname.split('/').slice(-2);
+    var ctr = data[d].series[i];
     line = [];
     line.push('<td><span style="display:inline-block; width:40px; height:2px; border-top:4px solid ' +
-        data[d].series[i].color + '"></span></td>');
-    var countryLink = location.pathname.split('/').slice(0, -2).concat('country', data[d].series[i].name).join('/')
+        ctr.color + '"></span></td>');
+    var countryLink = location.pathname.split('/').slice(0, -2).concat('country', ctr.name).join('/')
     line.push('<td style="background-color:#F8F8F8"><a href="' + countryLink + '">' +
-        data[d].series[i].name + '</a></td>');
-    line.push('<td>' + String(data[d].series[i].count) + '</td>');
-    line.push('<td style="background-color:#F8F8F8">' + String(data[d].series[i].usage) + ' (' +
-        String(Math.round(100 * data[d].series[i].usage / data[d].series[i].count)) + '%)</td>');
-    line.push('<td><a href="' + location.pathname + '/' + data[d].series[i].name.replace(/ /g, '_') + '">' +
-        String(data[d].series[i].usercount) + '</a></td>');
-    line.push('<td style="background-color:#F8F8F8">' + String(data[d].series[i].userreg) + ' (' +
-        String(Math.round(100 * data[d].series[i].userreg / data[d].series[i].usercount)) + '%)</td>');
+        ctr.name + '</a></td>');
+    var imagesLink = location.pathname.split('/').slice(0, -2).concat(
+        'images?event=' + evt[0] + '&year=' + evt[1] + '&country=' + ctr.name.replace(/ /g, '_')).join('/')
+    line.push('<td><a href="' + imagesLink + '">' + String(ctr.count) + '</td>');
+    line.push('<td style="background-color:#F8F8F8">' + String(ctr.usage) + ' (' +
+        String(Math.round(100 * ctr.usage / ctr.count)) + '%)</td>');
+    line.push('<td><a href="' + location.pathname + '/' + ctr.name.replace(/ /g, '_') + '">' +
+        String(ctr.usercount) + '</a></td>');
+    line.push('<td style="background-color:#F8F8F8">' + String(ctr.userreg) + ' (' +
+        String(Math.round(100 * ctr.userreg / ctr.usercount)) + '%)</td>');
     return '<tr>' + line.join('') + '</tr>'
 }
 

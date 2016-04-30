@@ -26,7 +26,6 @@ var data = [
 	</script>
 {% endblock %}
 {% block content %}
-<p>Some text here...</p>
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/{% if name == 'earth' -%}
 f/f4/WLE_Austria_Logo.svg/100px-WLE_Austria_Logo.svg.png{% else -%}
 f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style="float:right"/>
@@ -50,7 +49,7 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
         <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
     </tr>{% endfor %}
 </table><br/>
-<p>Below are the graps per country.</p><br/>
+<p>Below are the graphs per country.</p><br/>
 {% for country, cdata in data['countries']|dictsort %}
 <h2><a href="{{ url_for('country', name=country) }}">{{ country }}</a></h2><hr/>
 <div id="graph{{ loop.index }}">
@@ -68,7 +67,7 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
     {% for year, d in cdata|dictsort -%}
     <tr>
         <td>{{ year }}</td>
-        <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
+        <td style="background-color:#F8F8F8"><a href="{{ url_for('index') }}images?event={{ name }}&year={{ year }}&country={{ country }}">{{ d['count'] }}</a></td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
         <td style="background-color:#F8F8F8"><a href="/{{ name }}/{{ year }}/{{ country }}">{{ d['usercount'] }}</td>
         <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
