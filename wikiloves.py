@@ -103,13 +103,14 @@ def country(name):
 
 @app.route('/images')
 def images_page():
-    args = request.args
+    args = dict(request.args.items())
     imgs = images.get(args)
     if not imgs:
         return render_template('images_not_found.html', menu=menu, title=u'Images not found')
     backto = [args['event'], args['year']] + ([args['country']] if 'user' in args else [])
-    title = u'Images of {user}Wiki Loves {0} {1} {2}'.format(*name, user=name[3] + u' in ' if len(name) == 4 else u'')
-    return render_template('images.html', menu=menu, title='Images of Wiki Loves', warn=args, images=imgs, backto=backto)
+    title = u'Images of %sWiki Loves %s %s in %s' % (args['user'] + u' in ' if 'user' in args else u'',
+        args['event'].capitalize(), args['year'], args['country'])
+    return render_template('images.html', menu=menu, title=title, images=imgs, backto=backto)
 
 @app.template_filter(name='date')
 def date_filter(s):

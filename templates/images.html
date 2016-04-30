@@ -24,7 +24,7 @@
 </div>
 <table style="text-align: center; width: 100%">
 <tr>
-{% for img in images -%}
+{% for img in images[:200] -%}
 <td><img src="//upload.wikimedia.org/wikipedia/commons/thumb/{{ img[1][0] }}/{{ img[1] }}/{{ img[0] }}/{{ img[2] >= img[3] and 250 or (img[2] / img[3] * 250)|int }}px-{{ img[0] }}"/>
     <br/><a href="https://commons.wikimedia.org/wiki/File:{{ img[0] }}">{{ img[0]|replace('_', ' ') }}</a></td>
 {%- if loop.index % 4 == 0 %}
@@ -34,6 +34,19 @@
 {% endfor -%}
 </tr>
 </table>
+{% if images|length > 200 -%}
+<script>
+if (location.search.search('start=') != -1){
+    var start = location.search.match(/start=\d+/);
+    start = 'start=' + String(Number(start[0].substr(6)) + 200);
+    var next = location.pathname + location.search.replace(/start=\d+/, start);
+}
+else{
+    var next = location.pathname + location.search + '&start=201';
+}
+document.write('<br/><div style="text-align:center"><a href="' + next + '">Next page &gt;</a></div><br/>');
+</script>
+{%- endif %}
 {% if warn %}<p style="color:#500">{{ warn }}</p>{% endif %}
 
             </div>
