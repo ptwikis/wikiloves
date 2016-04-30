@@ -8,7 +8,7 @@
          <th>Registration</th>
          {% for user, d in data %}<tr>
              <td><a href="https://commons.wikimedia.org/w/index.php?title=Special:ListFiles&limit=250&user={{ user|replace(' ', '_') }}">{{ user }}</a></td>
-             <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
+             <td style="background-color:#F8F8F8"><a href="{{ url_for('index') }}images?event={{ name }}&year={{ year }}&country={{ country }}&user={{ user|replace(' ', '_') }}">{{ d['count'] }}</a></td>
              <td>{{ d['usage'] }}</td>
              <td style="background-color:#F8F8F8{% if d['reg'] > starttime %}; color:#080{% endif -%}
                  ">{{ d['reg']|date if d['reg'] else '?' }}</td>

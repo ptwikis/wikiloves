@@ -11,7 +11,7 @@ def makeQuery(args):
     params = {}
     params['user'] =  u' AND img_user_text = ?' if u'user' in args else u''
     if params['user']:
-        queryArgs += (args['user'],)
+        queryArgs += (args['user'].replace('_', ' '),)
     params['start'] =  ' OFFSET ' + str(args.get('start')) if start else u''
     params['mb'] = minmax(args.get('minmb'), args.get('maxmb'), ' AND img_size', lambda n:int(n) * 1048576)
     params['mp'] = minmax(args.get('minmp'), args.get('maxmp'), ' HAVING pixels', lambda n:int(n) * 1000000)
