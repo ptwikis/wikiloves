@@ -3,29 +3,40 @@
 
 from flask import Flask, render_template, request
 import json, os, time, re
+from os.path import getmtime
 import images
 
 app = Flask(__name__)
 app.debug = True
 
-try:
-    with open('db.json', 'r') as f:
-        db = json.load(f)
-except:
-    db = None
-menu = {name: sorted(e[-4:] for e in db if e[:-4] == name) for name in set(e[:-4] for e in db)}
-mainData = {name: {e[-4:]:
-    {'count': sum(db[e][c]['count'] for c in db[e]), 
-     'usercount': sum(db[e][c]['usercount'] for c in db[e]),
-     'userreg': sum(db[e][c]['userreg'] for c in db[e]),
-     'usage': sum(db[e][c]['usage'] for c in db[e])}
-    for e in db if e[:-4] == name} for name in set(e[:-4] for e in db)}
-cData = {}
-for e in db:
-    for c in db[e]:
-        cData.setdefault(c, {}).setdefault(e[:-4], {}).update({e[-4:]: {
-            'count': db[e][c]['count'], 'usercount': db[e][c]['usercount'],
-            'usage': db[e][c]['usage'], 'userreg': db[e][c]['userreg']}})
+dbtime = None
+
+def loadDB():
+    global db, menu, mainData, cData, dbtime
+    mtime = getmtime('db.json')
+    if dbtime and dbtime == mtime:
+        return
+    dbtime = mtime
+    try:
+        with open('db.json', 'r') as f:
+            db = json.load(f)
+    except:
+        db = None
+    menu = {name: sorted(e[-4:] for e in db if e[:-4] == name) for name in set(e[:-4] for e in db)}
+    mainData = {name: {e[-4:]:
+        {'count': sum(db[e][c]['count'] for c in db[e]), 
+         'usercount': sum(db[e][c]['usercount'] for c in db[e]),
+         'userreg': sum(db[e][c]['userreg'] for c in db[e]),
+         'usage': sum(db[e][c]['usage'] for c in db[e])}
+        for e in db if e[:-4] == name} for name in set(e[:-4] for e in db)}
+    cData = {}
+    for e in db:
+        for c in db[e]:
+            cData.setdefault(c, {}).setdefault(e[:-4], {}).update({e[-4:]: {
+                'count': db[e][c]['count'], 'usercount': db[e][c]['usercount'],
+                'usage': db[e][c]['usage'], 'userreg': db[e][c]['userreg']}})
+
+loadDB()
 
 @app.route('/')
 def index():
@@ -64,6 +75,7 @@ def event_main(name):
 @app.route('/monuments/20<year>', defaults={'name': 'monuments'})
 @app.route('/earth/20<year>', defaults={'name': 'earth'})
 def event_year(name, year):
+    loadDB()
     if not db:
         return index()
     year = '20' + year

@@ -178,7 +178,7 @@ if __name__ == '__main__' and 'update' in sys.argv:
         starttime = min(config[WL][c]['start'] for c in config[WL] if 'start' in config[WL][c])
         endtime = max(config[WL][c]['end'] for c in config[WL] if 'end' in config[WL][c])
         # Só atualiza concursos que não estejam no db.json ou que estejam em andamento
-        if WL not in db or starttime < time.strftime('%Y%m%d%H%M%S') < endtime:
+        if WL not in db or starttime < int(time.strftime('%Y%m%d%H%M%S')) < endtime:
             start = time.time()
             db[WL] = getData(WL, config[WL])
             with open('db.json', 'w') as f:
