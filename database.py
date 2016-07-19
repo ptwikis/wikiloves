@@ -76,7 +76,7 @@ def getConfig(page):
             data[event] = {}
         elif g['country'] and event:
             if g['country'] not in prefixes:
-                updateLog.append(u'Unknow prefix: ' + g['country'])
+                updateLog.append(u'Unknown prefix: ' + g['country'])
                 continue
             data[event][prefixes[g['country']]] = {'start': int(g['start']), 'end': int(g['end'])}
 
@@ -175,18 +175,14 @@ if __name__ == '__main__' and 'update' in sys.argv:
 
     commonsdb = DB()
     for WL in config:
-        starttime = min(config[WL][c]['start'] for c in config[WL] if 'start' in config[WL][c])
-        endtime = max(config[WL][c]['end'] for c in config[WL] if 'end' in config[WL][c])
-        # Só atualiza concursos que não estejam no db.json ou que estejam em andamento
-        if WL not in db or starttime < int(time.strftime('%Y%m%d%H%M%S')) < endtime:
-            start = time.time()
-            db[WL] = getData(WL, config[WL])
-            with open('db.json', 'w') as f:
-                json.dump(db, f)
-            log = 'Saved %s: %dsec, %d countries, %d uploads' % \
-                (WL, time.time() - start, len(db[WL]), sum(db[WL][c].get('count', 0) for c in db[WL]))
-            print log
-            updateLog.append(log)
+        start = time.time()
+        db[WL] = getData(WL, config[WL])
+        with open('db.json', 'w') as f:
+            json.dump(db, f)
+        log = 'Saved %s: %dsec, %d countries, %d uploads' % \
+            (WL, time.time() - start, len(db[WL]), sum(db[WL][c].get('count', 0) for c in db[WL]))
+        print log
+        updateLog.append(log)
     commonsdb.conn.close()
     if updateLog:
         with open('update.log', 'w') as f:
