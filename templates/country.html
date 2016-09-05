@@ -38,9 +38,9 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
     <tr>
         <td><a href="{{ url_for('.index') }}{{ name }}/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8"><a href="{{ url_for('index') }}images?event={{ name }}&year={{ year }}&country={{ country }}">{{ d['count'] }}</a></td>
-        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
+        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
         <td style="background-color:#F8F8F8"><a href="{{ url_for('.index') }}{{ name }}/{{ year }}/{{ country }}">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0)|int }}%)</td>
     </tr>{% endfor %}
 </table><br/><br/>
 {% endfor %}
