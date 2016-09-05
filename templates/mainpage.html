@@ -33,9 +33,9 @@ var data = [
     <tr>
         <td><a href="{{ url_for('index') }}earth/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
-        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
+        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0)|int }}%)</td>
     </tr>{% endfor %}
 </table>
 <br/><br/>
@@ -54,9 +54,9 @@ var data = [
     <tr>
         <td><a href="{{ url_for('index') }}monuments/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
-        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'])|int }}%)</td>
+        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'])|int }}%)</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0)|int }}%)</td>
     </tr>{% endfor %}
 </table>
 <br/><br/>
