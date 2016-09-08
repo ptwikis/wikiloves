@@ -28,7 +28,7 @@ function renderLine (id, series) {
         graph: graph,
         xFormatter: function(x){
             var d = new Date(x * 1000);
-            return d.getUTCDate() + ' ' + months[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+            return d.getUTCDate() + ' ' + months[d.getUTCMonth() - 1] + ' ' + d.getUTCFullYear();
         },
         yFormatter: function(y){return y}
     });
