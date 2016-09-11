@@ -46,7 +46,7 @@ f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0))|int }}%)</td>
+        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0)|int }}%)</td>
     </tr>{% endfor %}
 </table><br/>
 <p>Below are the graphs per country.</p><br/>
