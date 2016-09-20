@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8  -*-
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 import json, os, time, re
 from os.path import getmtime
 import images
@@ -123,6 +123,13 @@ def images_page():
     title = u'Images of %sWiki Loves %s %s in %s' % (args['user'] + u' in ' if 'user' in args else u'',
         args['event'].capitalize(), args['year'], args['country'])
     return render_template('images.html', menu=menu, title=title, images=imgs, backto=backto)
+
+@app.route('/db.json')
+def download():
+    response = make_response(json.dumps(db))
+    response.headers["Content-Disposition"] = "attachment; filename=db.json"
+    response.headers["Content-type"] = "application/json"
+    return response
 
 @app.template_filter(name='date')
 def date_filter(s):
