@@ -18,20 +18,27 @@ var data = [
 {% endblock %}
 {% block content %}
 {% if data %}
-<h2>Wiki Loves Earth</h2><hr/>
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/WLE_Austria_Logo.svg/100px-WLE_Austria_Logo.svg.png" style="float:right"/>
-<div id="graph-earth"></div><br/>
+
+{% set contests = [
+    ('earth', '#339966', '#45E695' ),
+    ('monuments', '#8F0000', '#E62E2E' ),
+] %}
+
+{% for name, bg_color_1, bg_color_2 in contests %}
+<h2>Wiki Loves {{ name|capitalize }}</h2><hr/>
+{% include "contest_logo.html" %}
+<div id="graph-{{ name }}"></div><br/>
 <table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
     <tr>
         <th>Year</th>
-        <th style="background-color:#339966; color:white">Uploads</th>
-        <th style="background-color:#45E695">Images used<br/>in the wikis</th>
+        <th style="background-color:{{bg_color_1}}; color:white">Uploads</th>
+        <th style="background-color:{{bg_color_2}}">Images used<br/>in the wikis</th>
         <th style="background-color:#2266AA; color:white">Uploaders</th>
         <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
     </tr>
-    {% for year, d in data['earth']|dictsort -%}
+    {% for year, d in  data[name]|dictsort -%}
     <tr>
-        <td><a href="{{ url_for('index') }}earth/{{ year }}">{{ year }}</a></td>
+        <td><a href="{{ url_for('index') }}{{ name }}/{{ year }}">{{ year }}</a></td>
         <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
         <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
         <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
@@ -39,40 +46,27 @@ var data = [
     </tr>{% endfor %}
 </table>
 <br/><br/>
-<h2>Wiki Loves Monuments</h2><hr/>
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png" style="float:right"/>
-<div id="graph-monuments"></div><br/>
-<table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
-    <tr>
-        <th>Year</th>
-        <th style="background-color:#8F0000; color:white">Uploads</th>
-        <th style="background-color:#E62E2E; color:white">Images used<br/>in the wikis</th>
-        <th style="background-color:#2266AA; color:white">Uploaders</th>
-        <th style="background-color:#5CA3E6; color:white">Uploaders registered<br/>after competition start</th>
-    </tr>
-    {% for year, d in data['monuments']|dictsort -%}
-    <tr>
-        <td><a href="{{ url_for('index') }}monuments/{{ year }}">{{ year }}</a></td>
-        <td style="background-color:#F8F8F8">{{ d['count'] }}</td>
-        <td>{{ d['usage'] }} ({{ (100 * d['usage'] / d['count'] if d['count'] != 0 else 0)|int }}%)</td>
-        <td style="background-color:#F8F8F8">{{ d['usercount'] }}</td>
-        <td>{{ d['userreg'] }} ({{ (100 * d['userreg'] / d['usercount'] if d['usercount'] != 0 else 0)|int }}%)</td>
-    </tr>{% endfor %}
-</table>
-<br/><br/>
+{% endfor %}
+
 <h2>Countries</h2><hr/>
 <table style="text-align:center; border-collapse:collapse; min-width:400px; margin-top:8px">
     <tr>
         <th>Country</th>
-        <th style="background-color:#339966; color:white">Wiki Loves Earth</th>
-        <th style="background-color:#8F0000; color:white">Wiki Loves Monuments</th>
+        {% for name, bg_color_1, _ in contests %}
+        <th style="background-color:{{ bg_color_1 }}; color:white">Wiki Loves {{ name|capitalize }}</th>
+        {% endfor %}
     </tr>
     {%- for c, events in countries|dictsort %}
-    <tr><td><a href="{{ url_for('country', name=c) }}">{{ c }}</a></td><td>{{ events[0]|sort|join(', ') if events[0] else ''}}</td>{#
-        #}<td>{{ events[1]|sort|join(', ') if events[1] else ''}}</td></tr>
+    <tr>
+        <td><a href="{{ url_for('country', name=c) }}">{{ c }}</a></td>
+        {%- for event in events %}
+        <td>{{ event|sort|join(', ') if event else ''}}</td>
+        {%- endfor %}
+    </tr>
     {%- endfor %}
 </table>
 <br/>
+
 <h2>Tool Configuration</h2><hr/>
 <p>The data is updated once a day and before each update the configuration is read from the <a href="https://commons.wikimedia.org/wiki/Module:WL_data">Module:WL data</a> in Commons, edit the module to add countries, add a new competition or modify the configuration.
 The name the country of each prefix and the competition period need to be configured in this page. 
