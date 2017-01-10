@@ -26,9 +26,7 @@ var data = [
 	</script>
 {% endblock %}
 {% block content %}
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/{% if name == 'earth' -%}
-f/f4/WLE_Austria_Logo.svg/100px-WLE_Austria_Logo.svg.png{% else -%}
-f/f3/LUSITANA_WLM_2011_d.svg/100px-LUSITANA_WLM_2011_d.svg.png{% endif %}" style="float:right"/>
+{% include "contest_logo.html" %}
 <div id="graph-{{ name }}"></div>
 <table style="text-align:center; border-collapse:collapse; min-width:500px; margin-top:8px">
     <tr>
